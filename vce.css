@@ -1,5 +1,5 @@
 @import url("//netdna.bootstrapcdn.com/twitter-bootstrap/2.3.2/css/bootstrap-combined.min.css");
-@import url("https://sitesteaders.ngrok.com/HTML/vce/bootstrap-slider.css");
+@import url("https://raw.github.com/ideaoforder/jquery-values-clarification/master/bootstrap-slider.css");
 
 table.vce-test {
 	border: solid red 2px;

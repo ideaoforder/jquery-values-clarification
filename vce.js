@@ -1,13 +1,10 @@
 jQuery.noConflict();
-// jQuery.getScript("https://sitesteaders.ngrok.com/HTML/vce/bootstrap-slider.js");
-
-// <script src="https://sitesteaders.ngrok.com/HTML/vce/bootstrap-slider.js" type="text/javascript"></script>
 jQuery(document).ready(function() {
   jQuery("table.vce-options").hide();
   jQuery("table.vce-factors").hide();
 
   jQuery.ajax({
-      url: 'https://sitesteaders.ngrok.com/HTML/vce/bootstrap-slider.js',
+      url: 'https://raw.github.com/ideaoforder/jquery-values-clarification/master/vce.js',
       crossDomain: true,
       dataType: "script",
       success: function () {
