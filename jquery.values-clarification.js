@@ -57,7 +57,8 @@
       default:
         this.picker
           .addClass('slider-horizontal')
-          .css('width', this.element.outerWidth());
+          .css('width', '100%');
+          // .css('width', this.element.outerWidth());
         this.orientation = 'horizontal';
         this.stylePos = 'left';
         this.mousePos = 'pageX';
@@ -240,7 +241,6 @@
     },
 
     mousemove: function(ev) {
-      
       // Touch: Get the original event:
       if (this.touchCapable && ev.type === 'touchmove') {
         ev = ev.originalEvent;
@@ -412,12 +412,6 @@ jQuery(document).ready(function() {
   jQuery("table.vce-options").hide();
   jQuery("table.vce-factors").hide();
 
-  var factor_content = '<div id="factors"><h3>what matters to me</h3><div id="slider-endpoints"><div id="left-endpoint">doesn\'t matter at all</div><div id="right-endpoint">matters a lot</div></div><ul></ul></div>';
-  jQuery("table.vce-factors").after(factor_content);
-
-  var option_content = '<div id="treatment-side"><h3>what\'s best for me</h3><div id="treatments" class="boxcolor"><ul></ul><br clear="left" /></div></div>';
-  jQuery("table.vce-options").after(option_content);
-
   // Turn factors table into sliders!
   var option_headings = Array();
   jQuery("table.vce-options thead tr th").each(function(i, v){
@@ -428,7 +422,9 @@ jQuery(document).ready(function() {
   var option_data = Array();
   var multipliers = Array();
   var mindex = 0;
+  var num_options = 0;
   jQuery("table.vce-options tbody tr").each(function(i, v){
+    num_options++;
     option_data[i] = Array();
     jQuery(this).children('td').each(function(ii, vv){
       option_data[i][option_headings[ii]] = jQuery(this).text();
@@ -439,6 +435,15 @@ jQuery(document).ready(function() {
     }); 
   })
 
+  var owidth = (num_options + 1) * 10;
+  var fwidth = 100 - owidth - 5;
+
+  var option_content = '<div id="option-side" style="margin-left: 5%; float: right; width: ' + owidth + '%;"><h3>what\'s best for me</h3><div id="options" class="boxcolor"><ul></ul><br clear="left" /></div></div>';
+  jQuery("table.vce-options").after(option_content);   
+
+  var factor_content = '<div id="factors" style="width: ' + fwidth + '%;"><h3>what matters to me</h3><div id="slider-endpoints"><div id="right-endpoint"><span class="label">matters a lot</span></div><div id="left-endpoint"><span class="label">doesn\'t matter at all</span></div></div><ul></ul></div>';
+  jQuery("table.vce-factors").after(factor_content); 
+
   for (var i = 0; i < option_data.length; i++) { 
 
     var content = '<li id="' + option_data[i]['label'] + '">';
@@ -446,7 +451,7 @@ jQuery(document).ready(function() {
     content += '<div class="box-container"><div class="box" style="background-color: ' + option_data[i]['color'] + ';">&nbsp</div></div>';
     content += '<div class="info"><h4>' + option_data[i]['name'] + '</h4></div>';
     content += '</li>';
-    jQuery('#treatments ul').append(content);
+    jQuery('#options ul').append(content);
   }
 
   // Turn factors table into sliders!
@@ -459,6 +464,9 @@ jQuery(document).ready(function() {
 
   var data = Array();
 
+  var constrained = (jQuery('table.vce-factors').hasClass('vce-constrained') && jQuery('table.vce-factors tbody tr').length == 2);
+  var tooltip = jQuery('table.vce-factors').hasClass('vce-tooltip');
+
   jQuery("table.vce-factors tbody tr").each(function(i, v){
     data[i] = Array();
     jQuery(this).children('td').each(function(ii, vv){
@@ -468,51 +476,82 @@ jQuery(document).ready(function() {
 
   for (var i = 0; i < data.length; i++) { 
     var content = '<li>';
-    content += '<input style="width: 385px;" id="factor-' + data[i]['label'] + '" type="text" class="span4 slider" value="' + data[i]['value'] + '"';
+    var val;
 
+    // Make sure values total 100 for constrained
+    if (constrained && i > 0) {
+      val = 100 - data[0]['value'];
+    } else {
+      val = data[i]['value'];
+    }
+    var w = Math.round(jQuery('div#factors').width() - 40);
+    content += '<input style="width: ' + w + 'px;" id="factor-' + data[i]['label'] + '" type="text" class="span4 slider" value="' + val + '"';
+
+    // Set multipliers
     for (var j = 0; j < multipliers.length; j++) { 
       content += 'data-multiplier-' + multipliers[j] + '="' + data[i][multipliers[j]] + '"';
     }
-    content += '/>';
+
+    // Check for constrained
+    if (constrained) { content += ' data-constrained=true'; }
+
+    // Check for tooltip
+    // Options are show/hide
+    if (tooltip) {
+      content += ' data-slider-tooltip="show"';
+    } else {
+      content += ' data-slider-tooltip="hide"';
+    }
+
+    content += ' />';
     content+= '<div class="text well">' + data[i]['name'] + '</div>'
     content += '</li>';
     jQuery('#factors ul').append(content);
   }
-
-  // jQuery("table.vce-options").hide();
-  // jQuery("table.vce-factors").hide();
-
 
   // initialize slider vals
   jQuery('input.slider').each(function(){
     jQuery(this).attr('data-slider-value', jQuery(this).val());
   });
 
-  function update_treatments(){
-    jQuery('#treatments ul li').each(function(){
-      var tx_num = 0;
-      var tx_name = jQuery(this).attr('id');
-      jQuery('input.slider').each(function(){
-        var out = Number(jQuery(this).data('multiplier-' + tx_name));
-        tx_num += (out * jQuery(this).val());
-      });
-      jQuery('#' + tx_name + ' div.box').height(tx_num);
-    });  
-  }
+  (function( $ ){
+     $.fn.set_option_vals = function() {
+      jQuery(this).find('ul li').each(function(){
+        var tx_num = 0;
+        var tx_name = jQuery(this).attr('id');
+        jQuery('input.slider').each(function(){
+          var out = Number(jQuery(this).data('multiplier-' + tx_name));
+          var o_val = jQuery(this).data('slider').getValue();
+          tx_num += (out * o_val);      
+        });
+        jQuery('#' + tx_name + ' div.box').height(tx_num);
+      }); 
+     }; 
+  })( jQuery );
 
-  update_treatments();
+
 
   jQuery('input.slider').slider({
     min: 0,
     max: 100,
     step: 1,
-    tooltip: 'hide', // show
     orientation: 'horizontal', // vertical
     selection: 'before' // after, none
   }).on('slide', function(ev){
-     // Set the input value
-    jQuery(ev.target).attr('value', jQuery(this).val());
-    update_treatments();       
+    // Set the input value
+    var this_val = jQuery(ev.target).data('slider').getValue();
+    jQuery(ev.target).attr('value', this_val);
+
+    // If constrained, move the other slider too
+    if (jQuery(ev.target).data('constrained') == 'true' || jQuery(ev.target).data('constrained') === true) {
+      var this_id = jQuery(ev.target).attr('id');
+      var other_slider = jQuery("input.slider:not(#" + this_id + ")");
+      var other_val = 100 - this_val;
+      other_slider.slider('setValue', other_val);
+    }
+
+    jQuery('#options').set_option_vals();
+
   }).on('slideStop', function(ev){
     // Do we need to do much on stop?
     var id = jQuery(ev.target).attr('id');
@@ -520,7 +559,7 @@ jQuery(document).ready(function() {
         // variable is undefined
     } else {
       // Set associated embedded data
-      var val = jQuery(this).val();
+      var val = jQuery(ev.target).data('slider').getValue();
       Qualtrics.SurveyEngine.setEmbeddedData(id, val);
 
       // And set the data string
@@ -535,5 +574,7 @@ jQuery(document).ready(function() {
       Qualtrics.SurveyEngine.setEmbeddedData(strdata, data);
     }
   });
+
+  jQuery('#options').set_option_vals();
 
 });
