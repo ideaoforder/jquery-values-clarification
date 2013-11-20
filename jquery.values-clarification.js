@@ -553,14 +553,27 @@ jQuery(document).ready(function() {
     jQuery('#options').set_option_vals();
 
   }).on('slideStop', function(ev){
-    // Do we need to do much on stop?
     var id = jQuery(ev.target).attr('id');
+
+    // Check if we're constrained
+    if (jQuery(ev.target).data('constrained') == 'true' || jQuery(ev.target).data('constrained') === true) {
+      var constrained = true;
+      var constrained_slider = jQuery("input.slider:not(#" + id + ")");
+      var constrained_slider_id = constrained_slider.attr('id'); 
+    }
+
+    // Do we need to do much on stop?
     if (typeof Qualtrics === 'undefined') {
         // variable is undefined
     } else {
       // Set associated embedded data
       var val = jQuery(ev.target).data('slider').getValue();
       Qualtrics.SurveyEngine.setEmbeddedData(id, val);
+      if (constrained) {
+        var constrained_slider_val = 100 - val;
+        constrained_slider.slider('setValue', constrained_slider_val);
+        Qualtrics.SurveyEngine.setEmbeddedData(constrained_slider_id, constrained_slider_val);
+      }
 
       // And set the data string
       var strdata = id.replace('factor', 'strdata');
@@ -572,6 +585,17 @@ jQuery(document).ready(function() {
         var data = cur_data + ';' + val + ':' + ts;
       }
       Qualtrics.SurveyEngine.setEmbeddedData(strdata, data);
+
+      if (constrained) {
+        var strdata2 = constrained_slider_id.replace('factor', 'strdata');
+        var cur_data2 = Qualtrics.SurveyEngine.getEmbeddedData(strdata2);
+        if (cur_data2 === undefined) {
+          var data2 = constrained_slider_val + ':' + ts;
+        } else {
+          var data2 = cur_data2 + ';' + constrained_slider_val + ':' + ts;
+        }
+        Qualtrics.SurveyEngine.setEmbeddedData(strdata2, data2);        
+      }
     }
   });
 
