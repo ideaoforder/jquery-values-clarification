@@ -415,7 +415,7 @@ jQuery(document).ready(function() {
   // Turn factors table into sliders!
   var option_headings = Array();
   jQuery("table.vce-options thead tr th").each(function(i, v){
-    var txt = jQuery(this).text().toLowerCase();
+    var txt = jQuery.trim(jQuery(this).text().toLowerCase());
     option_headings[i] = txt;
   })
 
@@ -427,9 +427,9 @@ jQuery(document).ready(function() {
     num_options++;
     option_data[i] = Array();
     jQuery(this).children('td').each(function(ii, vv){
-      option_data[i][option_headings[ii]] = jQuery(this).text();
+      option_data[i][option_headings[ii]] = jQuery.trim(jQuery(this).text());
       if (option_headings[ii] == 'label') {
-        multipliers[mindex] = jQuery(this).text();
+        multipliers[mindex] = jQuery.trim(jQuery(this).text());
         mindex++;
       }
     }); 
@@ -457,7 +457,7 @@ jQuery(document).ready(function() {
   // Turn factors table into sliders!
   var header = Array();
   jQuery("table.vce-factors thead tr th").each(function(i, v){
-    var txt = jQuery(this).text().toLowerCase();
+    var txt = jQuery.trim(jQuery(this).text().toLowerCase());
     header[i] = txt;
   })
 
@@ -470,7 +470,7 @@ jQuery(document).ready(function() {
   jQuery("table.vce-factors tbody tr").each(function(i, v){
     data[i] = Array();
     jQuery(this).children('td').each(function(ii, vv){
-      data[i][header[ii]] = jQuery(this).text();
+      data[i][header[ii]] = jQuery.trim(jQuery(this).text());
     }); 
   })
 
@@ -502,7 +502,6 @@ jQuery(document).ready(function() {
     } else {
       content += ' data-slider-tooltip="hide"';
     }
-
     content += ' />';
     content+= '<div class="text well">' + data[i]['name'] + '</div>'
     content += '</li>';
